@@ -1,4 +1,5 @@
-﻿
+USE BikeStores
+GO
 /*جدولی شامل فیلدهای سوال که قیمت آنها کمتر از 1000 دلار باشد*/
 SELECT PR.product_id,PR.product_name,
 BR.brand_id,BR.brand_name
