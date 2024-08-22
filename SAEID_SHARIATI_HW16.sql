@@ -22,13 +22,15 @@ GROUP BY SS.store_id,SS.store_name
 ORDER BY SS.store_id;
 
 --تعداد کل آیتم ها و مبلغ کل خرید مشتری با آی دی 114
-WITH CustomerSaleDetails(CustomerId,SaleCount,TotalSaleCost) AS(
-SELECT  OS.customer_id,COUNT(*), SUM(IT.list_price)
+WITH CustomerSaleDetails(CustomerId,SaleCount,TotalSaleCost,PayAmount,DiscountAmount) AS(
+SELECT  OS.customer_id,COUNT(*),SUM(IT.list_price),ROUND(SUM(IT.list_price - (IT.list_price * IT.discount)),2),SUM(IT.list_price * IT.discount) AS DiscountAmount
 FROM SALES.orders OS INNER JOIN SALES.order_items IT 
 ON OS.order_id = IT.order_id  
 WHERE customer_id = 114
 GROUP BY OS.customer_id)
-SELECT CSD.CustomerId,SC.first_name,SC.last_name,SC.city,CSD.SaleCount AS [Sale Count],CSD.TotalSaleCost AS [Total Sale Cost]
+SELECT CSD.CustomerId,SC.first_name,SC.last_name,SC.city,CSD.SaleCount AS [Sale Count]
+,CSD.TotalSaleCost AS [Total Sale Cost],CSD.DiscountAmount AS [Discount Amount],
+CSD.PayAmount As [Customer Must Pay]
 from CustomerSaleDetails CSD LEFT JOIN sales.customers SC
 ON CSD.CustomerId = SC.customer_id
 
@@ -79,11 +81,11 @@ ORDER BY
     SS.store_id;
 
 --تعداد کل آیتم ها و مبلغ کل خرید مشتری با آی دی 114
-	WITH CustomerSaleDetails AS (
+WITH CustomerSaleDetails AS (
     SELECT
         OS.customer_id,
         COUNT(*) OVER (PARTITION BY OS.customer_id) AS SaleCount,
-        SUM(IT.list_price) OVER (PARTITION BY OS.customer_id) AS TotalSaleCost
+        ROUND(SUM(IT.list_price - (it.list_price * IT.discount)) OVER (PARTITION BY OS.customer_id), 2) AS TotalSaleCost
     FROM 
         SALES.orders OS 
     INNER JOIN 
@@ -93,7 +95,8 @@ ORDER BY
     WHERE 
         OS.customer_id = 114
 )
-SELECT DISTINCT 
+SELECT 
+    DISTINCT
     CSD.customer_id,
     SC.first_name,
     SC.last_name,
